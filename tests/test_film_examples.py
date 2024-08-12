@@ -1,21 +1,22 @@
+import json
+
 import pytest
+from psycopg2._psycopg import cursor
+
 from src.jsontable import (
-    ColumnList,
-    NestedPath,
-    PathExpression,
     Column,
-    JsonTable,
+    ColumnList,
     ContextItem,
+    FormatJson,
     JsonQuery,
+    JsonTable,
+    NestedPath,
+    OrdinalityColumn,
     Passing,
     PassingList,
-    OrdinalityColumn,
-    FormatJson,
+    PathExpression,
 )
-
-from tests.fixtures import transaction, connection  # noqa: F401
-from psycopg2._psycopg import cursor
-import json
+from tests.fixtures import connection, transaction  # noqa: F401
 
 """
 This module uses the examples found at https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE
@@ -123,7 +124,7 @@ def test_table_with_passing(my_films: cursor):  # noqa: F811
             kind text PATH '$.kind',
             title text FORMAT JSON PATH '$.films[*].title' OMIT QUOTES,
             director text PATH '$.films[*].director' KEEP QUOTES)) AS jt
-        """
+    """
     jsonquery = JsonQuery(
         JsonTable(
             context_item=ContextItem("js"),

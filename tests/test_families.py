@@ -9,7 +9,11 @@ from src.jsontable import (
     OrdinalityColumn,
     PathExpression,
 )
-from .fixtures import families_table_cursor, cursor, transaction, connection  # noqa: F401
+
+from .fixtures import connection  # noqa: F401
+from .fixtures import families_table_cursor  # noqa: F401
+from .fixtures import transaction  # noqa: F401
+from .fixtures import cursor
 
 
 def test_families(families_table_cursor: cursor):  # noqa: F811

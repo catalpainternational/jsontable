@@ -2,10 +2,14 @@
 These examples were derived from https://suhas.org/postgres/json-table/
 """
 
-from src.jsontable import JsonTable, ContextItem, PathExpression, ColumnList, Column
-from tests.fixtures import products, connection, transaction, orders  # noqa: F401
-from psycopg2._psycopg import cursor
 from psycopg2 import sql
+from psycopg2._psycopg import cursor
+
+from src.jsontable import Column, ColumnList, ContextItem, JsonTable, PathExpression
+from tests.fixtures import connection  # noqa: F401
+from tests.fixtures import orders  # noqa: F401
+from tests.fixtures import products  # noqa: F401
+from tests.fixtures import transaction  # noqa: F401
 
 
 def test_products(products: cursor):  # noqa: F811
@@ -27,7 +31,9 @@ def test_products(products: cursor):  # noqa: F811
         columns=ColumnList([Column("size", "TEXT", PathExpression("$"))]),
     )
 
-    query = sql.SQL("SELECT p.name, jt.size FROM products p, {} AS jt;").format(jt.as_sql())
+    query = sql.SQL("SELECT p.name, jt.size FROM products p, {} AS jt;").format(
+        jt.as_sql()
+    )
 
     products.execute(query)
     data2 = products.fetchall()

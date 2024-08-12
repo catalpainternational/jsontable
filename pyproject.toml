@@ -16,6 +16,7 @@ dev = [
     "psycopg2-binary",
     "sqlparse",
     "hatchling",
+    "isort"
 ]
 
 [build-system]

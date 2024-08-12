@@ -3,15 +3,15 @@ from .table import (
     ColumnExists,
     ColumnList,
     ContextItem,
+    FormatJson,
     JsonQuery,
     JsonTable,
     NestedPath,
     OrdinalityColumn,
-    PathExpression,
     Passing,
     PassingList,
-    FormatJson,
-    Rendered
+    PathExpression,
+    Rendered,
 )
 
 __all__ = (
@@ -27,5 +27,5 @@ __all__ = (
     "Passing",
     "PassingList",
     "FormatJson",
-    "Rendered"
+    "Rendered",
 )

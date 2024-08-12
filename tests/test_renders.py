@@ -1,18 +1,20 @@
 from src.jsontable import (
+    Column,
+    ColumnExists,
     ColumnList,
+    ContextItem,
     JsonTable,
     NestedPath,
+    OrdinalityColumn,
     Passing,
     PassingList,
     PathExpression,
-    ContextItem,
-    OrdinalityColumn,
-    Column,
-    ColumnExists,
     Rendered,
 )
-
-from tests.fixtures import cursor, products, transaction, connection  # noqa: F401
+from tests.fixtures import connection  # noqa: F401
+from tests.fixtures import products  # noqa: F401
+from tests.fixtures import transaction  # noqa: F401
+from tests.fixtures import cursor
 
 
 def test_OrdinalityColumn(transaction: cursor):  # noqa: F811
@@ -113,12 +115,6 @@ def test_jsontable(transaction: cursor):  # noqa: F811
     def render(thing: Rendered) -> bytes:
         return transaction.mogrify(thing.as_sql())
 
-    qs = """
-        JSON_TABLE (js, '$.favorites[*]' 
-        COLUMNS (id FOR ORDINALITY, kind text PATH '$.kind',
-        NESTED PATH '$.authors[*]' COLUMNS (author_id FOR ORDINALITY, author_name text PATH '$.name')))
-    """
-
     passing = Passing("Alfred Hitchcock", "filter")
     passing_list = PassingList([passing])
     assert render(passing_list) == b"PASSING 'Alfred Hitchcock' AS filter"
@@ -164,8 +160,9 @@ def test_jsontable(transaction: cursor):  # noqa: F811
         path_expression=PathExpression("$.favorites[*]"),
         columns=columns,
     )
-    assert transaction.mogrify(json_table.as_sql()).decode() == (""+
-        "JSON_TABLE (js, '$.favorites[*]' "+
-        "COLUMNS (id FOR ORDINALITY, kind text PATH '$.kind', "+
-        "NESTED PATH '$.authors[*]' COLUMNS (author_id FOR ORDINALITY, author_name text PATH '$.name')))"
+    assert transaction.mogrify(json_table.as_sql()).decode() == (
+        ""
+        + "JSON_TABLE (js, '$.favorites[*]' "
+        + "COLUMNS (id FOR ORDINALITY, kind text PATH '$.kind', "
+        + "NESTED PATH '$.authors[*]' COLUMNS (author_id FOR ORDINALITY, author_name text PATH '$.name')))"
     )

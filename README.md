@@ -67,6 +67,11 @@ tests/test_renders.py            55      0   100%
 TOTAL                           296      4    99%
 ```
 
+## Checks which Should Pass
+
+Ruff `python -m ruff format .`
+Mypy `python -m mypy .`
+
 ## Further Reading
 
 https://github.com/obartunov/sqljsondoc/blob/master/jsonpath.md

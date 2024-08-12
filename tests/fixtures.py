@@ -1,7 +1,9 @@
 import json
+
 import psycopg2
-from psycopg2._psycopg import connection as connection_, cursor
 import pytest
+from psycopg2._psycopg import connection as connection_
+from psycopg2._psycopg import cursor
 
 psycopg2.connect
 
@@ -54,8 +56,7 @@ def orders(products: cursor):
         id SERIAL PRIMARY KEY,
         product_id INT REFERENCES products(id),
         quantity INT
-    );"""
-    )
+    );""")
     products.execute("""
     INSERT INTO orders (product_id, quantity) VALUES
     (1, 2),
@@ -86,5 +87,7 @@ def families_table_cursor(transaction: cursor):
     ]
 
     transaction.execute("CREATE TABLE families (id SERIAL PRIMARY KEY, data JSONB);")
-    transaction.execute("INSERT INTO families (data) VALUES (%s);", (json.dumps(families_data),))
+    transaction.execute(
+        "INSERT INTO families (data) VALUES (%s);", (json.dumps(families_data),)
+    )
     yield transaction

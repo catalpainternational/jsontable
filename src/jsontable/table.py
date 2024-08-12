@@ -1,25 +1,20 @@
-# JSON_TABLE (
-#     context_item, path_expression [ AS json_path_name ] [ PASSING { value AS varname } [, ...] ]
-#     COLUMNS ( json_table_column [, ...] )
-#     [ { ERROR | EMPTY [ARRAY]} ON ERROR ]
-# )
-
+import operator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import reduce
-import operator
-from typing import Annotated, Generator, Literal
+from typing import Annotated, Generator, Literal, Union
+
 from psycopg2 import sql
 
 
 @dataclass
 class Rendered(ABC):
-
     @abstractmethod
-    def as_sql_parts(self) -> Generator[sql.SQL | sql.Composed, None, None]:
-        ...  # pragma: no cover
-    
-    def as_sql(self) -> sql.Composed:
+    def as_sql_parts(
+        self,
+    ) -> Generator[sql.SQL | sql.Composed, None, None]: ...  # pragma: no cover
+
+    def as_sql(self) -> sql.SQL | sql.Composed:
         return reduce(operator.add, self.as_sql_parts())
 
 
@@ -58,9 +53,8 @@ class ContextItem(Rendered):
 
 @dataclass
 class OrdinalityColumn(BaseColumn):
-
     def as_sql_parts(self) -> Generator[sql.SQL | sql.Composed, None, None]:
-        return sql.SQL("{} FOR ORDINALITY").format(sql.SQL(self.name))
+        yield sql.SQL("{} FOR ORDINALITY").format(sql.SQL(self.name))
 
 
 @dataclass
@@ -107,6 +101,7 @@ class Passing(Rendered):
     def as_sql_parts(self) -> Generator[sql.SQL | sql.Composed, None, None]:
         yield sql.SQL("{} AS {}").format(sql.Literal(self.value), sql.SQL(self.as_))
 
+
 @dataclass
 class PassingList(Rendered):
     passings: list[Passing]
@@ -118,9 +113,20 @@ class PassingList(Rendered):
                 yield sql.SQL(", ")
             yield from passing.as_sql_parts()
 
+
+@dataclass
+class NestedPath(Rendered):
+    path_expression: PathExpression
+    columns: "ColumnList"
+
+    def as_sql_parts(self):
+        yield sql.SQL("NESTED PATH {} ").format(sql.Literal(self.path_expression))
+        yield from self.columns.as_sql_parts()
+
+
 @dataclass
 class ColumnList(Rendered):
-    columns: list[Column, ColumnExists, OrdinalityColumn, "NestedPath"]
+    columns: list[Union[Column | ColumnExists | OrdinalityColumn | NestedPath]]
 
     def as_sql_parts(self):
         yield sql.SQL("COLUMNS (")
@@ -130,16 +136,6 @@ class ColumnList(Rendered):
             yield from column.as_sql_parts()
         yield sql.SQL(")")
 
-
-
-@dataclass
-class NestedPath(Rendered):
-    path_expression: PathExpression
-    columns: ColumnList
-
-    def as_sql_parts(self):
-        yield sql.SQL("NESTED PATH {} ").format(sql.Literal(self.path_expression))
-        yield from self.columns.as_sql_parts()
 
 @dataclass
 class JsonTable(Rendered):
@@ -161,6 +157,7 @@ class JsonTable(Rendered):
             yield from self.columns.as_sql_parts()
         yield sql.SQL(")")
 
+
 @dataclass
 class JsonQuery(Rendered):
     """
@@ -178,6 +175,8 @@ class JsonQuery(Rendered):
             yield sql.SQL("SELECT * FROM ")
             yield from self.json_table.as_sql_parts()
         else:
-            yield sql.SQL("SELECT {}.* FROM {}, ").format(sql.Identifier(self.alias), sql.Identifier(self.table_name))
+            yield sql.SQL("SELECT {}.* FROM {}, ").format(
+                sql.Identifier(self.alias), sql.Identifier(self.table_name)
+            )
             yield from self.json_table.as_sql_parts()
             yield sql.SQL(" AS {}").format(sql.Identifier(self.alias))
